@@ -125,6 +125,27 @@ input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba
 .tips li{ font-size:.76rem; color:var(--text2); padding-left:16px; position:relative; line-height:1.45 }
 .tips li::before{ content:"›"; position:absolute; left:2px; color:var(--accent); font-weight:700 }
 .notice{ font-size:.74rem; color:var(--text3); line-height:1.55 }
+.hist-row{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 2px; border-bottom:1px solid var(--border); font-size:.8rem;
+}
+.hist-row:last-child{ border-bottom:none }
+.hist-info{ flex:1; min-width:0 }
+.hist-title{ color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.hist-meta{ color:var(--text3); font-size:.7rem; margin-top:2px }
+.hist-val{ text-align:right; font-variant-numeric:tabular-nums; flex-shrink:0 }
+.hist-lucro{ font-weight:700 }
+.hist-del{
+  background:transparent; border:1px solid var(--border); color:var(--text3);
+  border-radius:8px; width:28px; height:28px; flex-shrink:0; font-size:.8rem;
+}
+.hist-del:active{ background:var(--red-bg); color:var(--red); border-color:var(--red) }
+.hist-empty{ text-align:center; color:var(--text3); font-size:.76rem; padding:16px 0 }
+select{
+  width:100%; background:var(--bg); border:1px solid var(--border2);
+  color:var(--text); padding:11px 12px; border-radius:10px; font-size:1rem;
+  -webkit-appearance:none; appearance:none;
+}
 .notice a{ color:var(--accent) }
 
 /* ---------- Desktop ---------- */
@@ -182,8 +203,8 @@ input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba
       <div class="card-title">🧮 Calculadora back / lay</div>
       <div class="field"><label>Aposta back na Betano (R$)</label><input type="number" id="stakeBetano" value="20" step="1" inputmode="decimal"></div>
       <div class="grid2">
-        <div class="field"><label>Odd Betano (back)</label><input type="number" id="oddBetano" value="1.78" step="0.01" min="1.01" inputmode="decimal"></div>
-        <div class="field"><label>Odd Betfair (lay)</label><input type="number" id="oddBetfair" value="1.75" step="0.01" min="1.01" inputmode="decimal"></div>
+        <div class="field"><label>Odd Betano (back)</label><input type="number" id="oddBetano" value="5.78" step="0.01" min="1.01" inputmode="decimal"></div>
+        <div class="field"><label>Odd Betfair (lay)</label><input type="number" id="oddBetfair" value="3.22" step="0.01" min="1.01" inputmode="decimal"></div>
       </div>
       <div class="field"><label>Comissão Betfair (%)</label><input type="number" id="comissaoBetfair" value="5" step="0.5" min="0" max="20" inputmode="decimal"></div>
 
@@ -201,6 +222,61 @@ input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba
         <div class="kv"><span>Lucro garantido</span><span class="big-profit" id="lucroDisplay">—</span></div>
         <div class="kv"><span>ROI sobre capital travado</span><b id="roiDisplay">—</b></div>
       </div>
+
+      <div class="box" style="border-left-color:var(--accent);margin-top:12px">
+        <div class="kv" style="border:none;padding-bottom:8px"><span style="font-weight:700;color:var(--text)">🎯 Valores para apostar agora</span></div>
+        <div class="kv"><span>1️⃣ Betano · BACK</span><b class="big-profit" id="betBackVal" style="font-size:1.2rem;color:var(--orange)">—</b></div>
+        <div style="font-size:.72rem;color:var(--text3);padding:2px 0 8px 0">Aposte este valor no resultado escolhido</div>
+        <div class="kv"><span>2️⃣ Betfair · LAY</span><b class="big-profit" id="betLayVal" style="font-size:1.2rem;color:var(--yellow)">—</b></div>
+        <div style="font-size:.72rem;color:var(--text3);padding:2px 0 8px 0">Sua responsabilidade (risco) será <b id="betRespVal2" style="color:var(--text2)">—</b></div>
+        <div class="kv" style="border-top:1px dashed var(--border2);padding-top:8px"><span>💡 Versão arredondada (anti-limitação)</span></div>
+        <div style="font-size:.78rem;color:var(--text2);line-height:1.6">Betano: <b id="roundBack" style="color:var(--orange)">—</b> · Betfair: <b id="roundLay" style="color:var(--yellow)">—</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚔️ Arbitragem múltipla (2+ apostas)</div>
+      <div class="field"><label>Valor total a investir (R$)</label><input type="number" id="bbTotal" value="12" step="1" inputmode="decimal"></div>
+      <div id="bbRows"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn" onclick="addRow()">＋ Mais apostas</button>
+        <button class="btn" onclick="resetBB()">↺ Reiniciar</button>
+      </div>
+      <div id="bbOut"></div>
+      <div class="box warn" style="font-size:.74rem;color:var(--text2);line-height:1.55;margin-top:12px">
+        ⚠️ Lucro garantido só existe se as apostas <b style="color:var(--amber)">cobrirem todos os resultados possíveis</b>
+        (ex.: casa / empate / fora, ou todos os placares do seu combo). Se houver cenário descoberto,
+        as apostas perdem juntas nele. ROI acima de ~5% entre casas diferentes merece desconfiança.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📒 Registro de apostas</div>
+      <div class="grid2">
+        <div class="field"><label>Casa</label>
+          <select id="histCasa">
+            <option>Betano</option><option>Betfair</option><option>Outra</option>
+          </select>
+        </div>
+        <div class="field"><label>Resultado</label>
+          <select id="histResult">
+            <option value="win">Ganhou ✅</option>
+            <option value="loss">Perdeu ❌</option>
+          </select>
+        </div>
+        <div class="field"><label>Valor apostado (R$)</label><input type="number" id="histStake" placeholder="Ex.: 16" step="0.01" min="0" inputmode="decimal"></div>
+        <div class="field"><label>Odd</label><input type="number" id="histOdd" placeholder="Ex.: 2.35" step="0.01" min="1.01" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label>Descrição (opcional)</label><input type="text" id="histDesc" placeholder="Ex.: Criar aposta Fiji x Vanuatu"></div>
+      <button class="btn" onclick="addHist()" style="width:100%;justify-content:center;background:var(--bg3)">＋ Adicionar aposta</button>
+
+      <div class="box" id="histSummaryBox" style="margin-top:12px">
+        <div class="kv"><span>Apostas registradas</span><b id="histCount">0</b></div>
+        <div class="kv"><span>Total investido</span><b id="histTotalStaked">—</b></div>
+        <div class="kv"><span>Lucro / prejuízo acumulado</span><b id="histTotalLucro">—</b></div>
+        <div class="kv"><span>ROI</span><b id="histRoi">—</b></div>
+      </div>
+      <div id="histList" style="margin-top:6px"></div>
     </div>
 
     <div class="card">
@@ -272,7 +348,7 @@ function calcularTudo(){
 
   const valid = stake > 0 && ob >= 1.01 && ol >= 1.01 && den > 0;
   if (!valid){
-    ['stakeLayDisplay','respLayDisplay','lucroDisplay'].forEach(i => document.getElementById(i).textContent = '—');
+    ['stakeLayDisplay','respLayDisplay','lucroDisplay','betBackVal','betLayVal','betRespVal2','roundBack','roundLay'].forEach(i => document.getElementById(i).textContent = '—');
     document.getElementById('roiDisplay').textContent = '—';
     document.getElementById('oddMinDisplay').textContent = '—';
     badge.className = 'badge bad'; badge.textContent = 'odds inválidas';
@@ -295,6 +371,141 @@ function calcularTudo(){
   document.getElementById('lucroDisplay').textContent = fmtBRL.format(lucro);
   document.getElementById('roiDisplay').textContent = fmtPct.format(roi) + '%';
   box.className = 'box ' + (lucro > 0 ? 'green' : lucro < 0 ? 'red' : '');
+
+  // Valores prontos para apostar
+  document.getElementById('betBackVal').textContent = fmtBRL.format(stake);
+  document.getElementById('betLayVal').textContent = fmtBRL.format(lay);
+  document.getElementById('betRespVal2').textContent = fmtBRL.format(resp);
+  const backR = Math.max(1, Math.round(stake));
+  const layR = (backR * ob) / den;
+  document.getElementById('roundBack').textContent = fmtBRL.format(backR);
+  document.getElementById('roundLay').textContent = fmtBRL.format(layR);
+}
+
+const BB_DEFAULTS = [2.10, 2.40];
+
+function addRow(value){
+  const rows = document.getElementById('bbRows');
+  const div = document.createElement('div');
+  div.className = 'field';
+  div.innerHTML = '<label>Aposta ' + (rows.children.length + 1) + ' · odd</label>' +
+    '<div style="display:flex;gap:8px">' +
+    '<input class="bb-odd" type="number" step="0.01" min="1.01" inputmode="decimal" value="' + (value !== undefined ? value : '') + '" placeholder="Ex.: 2.10">' +
+    '<button class="btn" onclick="this.parentElement.parentElement.remove();renumberBB();calcBackBack()" style="flex-shrink:0">✕</button>' +
+    '</div>';
+  rows.appendChild(div);
+  div.querySelector('input').addEventListener('input', calcBackBack);
+  renumberBB();
+}
+
+function renumberBB(){
+  document.querySelectorAll('#bbRows .field label').forEach((l, i) => l.textContent = 'Aposta ' + (i + 1) + ' · odd');
+}
+
+function resetBB(){
+  document.getElementById('bbRows').innerHTML = '';
+  BB_DEFAULTS.forEach(v => addRow(v));
+  calcBackBack();
+}
+
+function calcBackBack(){
+  const T = parseNum('bbTotal');
+  const inputs = [...document.querySelectorAll('.bb-odd')];
+  const odds = inputs.map(i => parseFloat(String(i.value).replace(',', '.')) || 0);
+  const out = document.getElementById('bbOut');
+
+  const validCount = odds.filter(o => o >= 1.01).length;
+  if (T <= 0 || validCount < 2){
+    out.innerHTML = '';
+    return;
+  }
+
+  const inv = odds.reduce((acc, o) => acc + (o >= 1.01 ? 1 / o : 0), 0);
+  const retorno = T / inv;
+  const lucro = retorno - T;
+  const roi = lucro / T * 100;
+  const cls = lucro > 0 ? 'green' : lucro < 0 ? 'red' : '';
+
+  let rowsHtml = '<div class="box" style="border-left-color:var(--accent)"><div class="kv" style="border:none;padding-bottom:6px"><span style="font-weight:700;color:var(--text)">🎯 Valor em cada aposta</span></div>';
+  inputs.forEach((inp, i) => {
+    if (odds[i] >= 1.01){
+      const s = T * (1 / odds[i]) / inv;
+      rowsHtml += '<div class="kv"><span>Aposta ' + (i + 1) + ' @ ' + odds[i].toFixed(2).replace('.', ',') + '</span><b>' + fmtBRL.format(s) + '</b></div>';
+    }
+  });
+  rowsHtml += '</div>';
+
+  rowsHtml += '<div class="box ' + cls + '">' +
+    '<div class="kv"><span>Pagamento total</span><b>' + fmtBRL.format(retorno) + '</b></div>' +
+    '<div class="kv"><span>Lucro total</span><span class="big-profit">' + fmtBRL.format(lucro) + '</span></div>' +
+    '<div class="kv"><span>ROI</span><b>' + fmtPct.format(roi) + '%</b></div>' +
+    '</div>';
+  out.innerHTML = rowsHtml;
+}
+
+/* ===== Registro de apostas (localStorage) ===== */
+const HIST_KEY = 'arb_history_v1';
+function loadHist(){ try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch(e){ return []; } }
+function saveHist(h){ localStorage.setItem(HIST_KEY, JSON.stringify(h)); }
+
+function addHist(){
+  const casa = document.getElementById('histCasa').value;
+  const result = document.getElementById('histResult').value;
+  const stake = parseFloat(String(document.getElementById('histStake').value).replace(',', '.')) || 0;
+  const odd = parseFloat(String(document.getElementById('histOdd').value).replace(',', '.')) || 0;
+  const desc = document.getElementById('histDesc').value.trim();
+  if (stake <= 0){ document.getElementById('histStake').focus(); return; }
+  if (result === 'win' && odd < 1.01){ document.getElementById('histOdd').focus(); return; }
+
+  const lucro = result === 'win' ? stake * odd - stake : -stake;
+  const h = loadHist();
+  h.unshift({ t: Date.now(), casa, result, stake, odd, desc, lucro });
+  saveHist(h);
+
+  document.getElementById('histStake').value = '';
+  document.getElementById('histOdd').value = '';
+  document.getElementById('histDesc').value = '';
+  renderHist();
+}
+
+function delHist(i){
+  const h = loadHist();
+  h.splice(i, 1);
+  saveHist(h);
+  renderHist();
+}
+
+function renderHist(){
+  const h = loadHist();
+  const list = document.getElementById('histList');
+  const fmtDate = new Intl.DateTimeFormat('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+  if (h.length === 0){
+    list.innerHTML = '<div class="hist-empty">Nenhuma aposta registrada ainda.<br>Anote suas entradas para acompanhar a evolução da banca.</div>';
+  } else {
+    list.innerHTML = h.map((e, i) => {
+      const lucroCls = e.lucro >= 0 ? 'var(--green)' : 'var(--red)';
+      const resTag = e.result === 'win' ? '✅' : '❌';
+      const oddTxt = e.result === 'win' && e.odd >= 1.01 ? ' @ ' + e.odd.toFixed(2).replace('.', ',') : '';
+      return '<div class="hist-row">' +
+        '<div class="hist-info"><div class="hist-title">' + resTag + ' ' + (e.desc || e.casa) + '</div>' +
+        '<div class="hist-meta">' + e.casa + ' · ' + fmtBRL.format(e.stake) + oddTxt + ' · ' + fmtDate.format(new Date(e.t)) + '</div></div>' +
+        '<div class="hist-val"><div class="hist-lucro" style="color:' + lucroCls + '">' + (e.lucro >= 0 ? '+' : '') + fmtBRL.format(e.lucro) + '</div></div>' +
+        '<button class="hist-del" onclick="delHist(' + i + ')">✕</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  const totalStaked = h.reduce((a, e) => a + e.stake, 0);
+  const totalLucro = h.reduce((a, e) => a + e.lucro, 0);
+  const roi = totalStaked > 0 ? totalLucro / totalStaked * 100 : 0;
+  document.getElementById('histCount').textContent = h.length;
+  document.getElementById('histTotalStaked').textContent = fmtBRL.format(totalStaked);
+  const lucroEl = document.getElementById('histTotalLucro');
+  lucroEl.textContent = (totalLucro >= 0 ? '+' : '') + fmtBRL.format(totalLucro);
+  lucroEl.style.color = totalLucro >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('histRoi').textContent = fmtPct.format(roi) + '%';
+  document.getElementById('histSummaryBox').className = 'box ' + (totalLucro > 0 ? 'green' : totalLucro < 0 ? 'red' : '');
 }
 
 function setView(v){
@@ -307,9 +518,9 @@ function reloadFrames(){
   });
 }
 
-document.querySelectorAll('input').forEach(i => i.addEventListener('input', calcularTudo));
-window.addEventListener('load', calcularTudo);
-calcularTudo();
+document.querySelectorAll('input').forEach(i => i.addEventListener('input', () => { resetBB(); calcularTudo(); renderHist(); }));
+window.addEventListener('load', () => { resetBB(); calcularTudo(); renderHist(); });
+resetBB(); calcularTudo(); renderHist();
 </script>
 </body>
 </html>
